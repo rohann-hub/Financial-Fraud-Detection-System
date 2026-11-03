@@ -1,0 +1,7 @@
+# Training, drift checks and retraining: everything the services use, plus the heavy libraries.
+-r serve.txt
+evidently==0.7.23
+imbalanced-learn==0.14.2
+matplotlib==3.11.2
+torch==2.15.0
+torch-geometric==2.8.1
