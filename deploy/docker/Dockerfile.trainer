@@ -1,0 +1,13 @@
+# Training, Feast setup, drift checks and retraining. Installs CPU PyTorch to keep the image small.
+FROM python:3.12-slim
+ENV PYTHONUNBUFFERED=1 PYTHONPATH=/app/src FRAUD_HOME=/app
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm -rf /var/lib/apt/lists/*
+COPY requirements requirements
+RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements/train.txt
+COPY src src
+COPY configs configs
+COPY feature_repo feature_repo
+COPY scripts scripts
+RUN useradd -u 1000 -m app && mkdir -p data && chown -R app /app
+USER app
