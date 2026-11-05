@@ -1,0 +1,58 @@
+# Single source of truth for pipeline settings.
+paths:
+  raw_dir: data/raw/ieee          # train_transaction.csv + train_identity.csv
+  processed_dir: data/processed
+  feature_dir: data/features
+  artifact_dir: data/artifacts
+  live_dir: data/live
+  monitoring_dir: data/monitoring
+
+split:                            # strictly by time; never shuffled
+  train_frac: 0.60
+  val_frac: 0.20                  # the remaining 0.20 is the untouched test / replay period
+
+xgboost:
+  n_estimators: 800
+  learning_rate: 0.05
+  max_depth: 7
+  min_child_weight: 3
+  subsample: 0.8
+  colsample_bytree: 0.6
+  reg_lambda: 2.0
+  early_stopping_rounds: 50
+
+imbalance:
+  strategies: [none, class_weight, smote]   # every strategy becomes one MLflow run
+  smote_sampling_strategy: 0.10             # minority / majority after resampling
+  smote_k_neighbors: 5
+
+gnn:
+  hidden: 64
+  layers: 2
+  dropout: 0.2
+  lr: 0.005
+  weight_decay: 0.0001
+  epochs: 150
+  patience: 25
+  label_delay_days: 7             # a fraud label only becomes known this long after the transaction
+  horizon_days: 14                # target: does this node show fraud in the next two weeks?
+  refresh_days: 7                 # how often the batch graph job rescoring nodes would run
+  fit_cut_fracs: [0.40, 0.55, 0.70, 0.85]   # past dates the graph is rebuilt at for training
+
+decision:
+  review_alert_rate: 0.02         # share of traffic analysts can review, on top of auto-blocks
+  block_precision: 0.95           # minimum precision for automatic blocking
+
+monitoring:
+  min_rows: 2000
+  reference_rows: 20000
+  current_rows: 5000              # newest live rows compared with the reference
+  min_labelled_rows: 3000         # retraining waits for this many confirmed labels...
+  min_labelled_fraud: 30          # ...and this many confirmed frauds
+  drift_share_threshold: 0.30     # retrain when this share of monitored columns has drifted
+  cooldown_hours: 24
+  promotion_margin: 0.0           # challenger PR-AUC must exceed champion by this much
+
+mlflow:
+  experiment: fraud-platform
+  model_name: fraud-blend

@@ -1,0 +1,31 @@
+# Minikube's hostpath provisioner lets every pod on the single node mount this volume.
+# On a multi-node cluster, replace it with a ReadWriteMany class or object storage.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fraud-data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 8Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mlflow-data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 4Gi
