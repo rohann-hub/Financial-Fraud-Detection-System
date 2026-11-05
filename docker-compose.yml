@@ -1,0 +1,117 @@
+# Full stack on one machine. See README for the order of commands.
+x-env: &env
+  KAFKA_BOOTSTRAP: kafka:9092
+  MLFLOW_TRACKING_URI: http://mlflow:5000
+  REDIS_CONNECTION: redis:6379
+  FRAUD_HOME: /app
+  ANALYST_API_URL: http://analyst:8001
+  INTERNAL_TOKEN: ${INTERNAL_TOKEN:-change-me-internal}
+
+services:
+  kafka:
+    image: apache/kafka:3.9.1
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_NUM_PARTITIONS: 1     # one partition keeps global event order for the single scorer
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 10s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: fraud
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-postgres}
+      POSTGRES_DB: fraud
+    volumes: [pg:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fraud"]
+      interval: 5s
+      retries: 12
+
+  mlflow:
+    build: {context: ., dockerfile: deploy/docker/Dockerfile.mlflow}
+    image: fraud-mlflow:latest
+    ports: ["5000:5000"]
+    volumes: [mlflow:/mlflow]
+
+  # One-off: docker compose --profile train run --rm trainer python -m fraudlib.pipeline all --raw data/raw/ieee
+  trainer:
+    profiles: [train]
+    build: {context: ., dockerfile: deploy/docker/Dockerfile.trainer}
+    image: fraud-trainer:latest
+    environment: *env
+    volumes: ["./data:/app/data"]
+    depends_on: [mlflow, redis]
+
+  scoring:
+    build: {context: ., dockerfile: deploy/docker/Dockerfile.service}
+    image: fraud-service:latest
+    command: uvicorn app:app --app-dir services/scoring --host 0.0.0.0 --port 8000
+    environment: *env
+    ports: ["8000:8000"]
+    volumes: ["./data:/app/data"]
+    depends_on:
+      kafka: {condition: service_healthy}
+      redis: {condition: service_started}
+      mlflow: {condition: service_started}
+    restart: on-failure
+
+  analyst:
+    image: fraud-service:latest
+    command: uvicorn app:app --app-dir services/analyst --host 0.0.0.0 --port 8001
+    environment:
+      <<: *env
+      DATABASE_URL: postgresql+psycopg2://fraud:${POSTGRES_PASSWORD:-change-me-postgres}@postgres:5432/fraud
+      SECRET_KEY: ${SECRET_KEY:-change-me-secret}
+      ANALYST_USERS: ${ANALYST_USERS:-analyst:demo123,lead:demo123}
+      MONITORING_DIR: /app/data/monitoring
+    ports: ["8001:8001"]
+    volumes: ["./data:/app/data"]
+    depends_on:
+      kafka: {condition: service_healthy}
+      postgres: {condition: service_healthy}
+      scoring: {condition: service_started}
+    restart: on-failure
+
+  dashboard:
+    build: {context: ., dockerfile: deploy/docker/Dockerfile.dashboard}
+    image: fraud-dashboard:latest
+    ports: ["8080:80"]
+    depends_on: [analyst]
+
+  # One-off: docker compose --profile replay run --rm producer python producer/replay.py --rate 200 --limit 20000
+  producer:
+    profiles: [replay]
+    image: fraud-service:latest
+    environment: *env
+    volumes: ["./data:/app/data"]
+    depends_on:
+      kafka: {condition: service_healthy}
+
+  # Automatic retraining trigger: docker compose --profile monitor up -d monitor
+  # Once, on demand: docker compose --profile monitor run --rm monitor python -m fraudlib.monitor.drift --retrain
+  monitor:
+    profiles: [monitor]
+    image: fraud-trainer:latest
+    command: ["sh", "-c", "while true; do python -m fraudlib.monitor.drift --retrain; sleep ${DRIFT_INTERVAL_SECONDS:-900}; done"]
+    environment: *env
+    volumes: ["./data:/app/data"]
+    depends_on: [mlflow, analyst]
+
+volumes:
+  pg:
+  mlflow:
