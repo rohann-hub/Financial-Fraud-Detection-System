@@ -1,0 +1,10 @@
+data
+reports
+.venv
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+frontend/dist
+.git
+mlruns
+mlartifacts
