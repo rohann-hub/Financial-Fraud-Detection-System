@@ -1,0 +1,9 @@
+{
+  "rows": 3000,
+  "columns_compared": 98,
+  "columns_mismatched": 0,
+  "worst_relative_feature_diff": 0.0,
+  "max_score_difference": 0.0,
+  "training_vs_serving_predictor_gap": 0.0,
+  "mismatches": {}
+}

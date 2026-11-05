@@ -1,0 +1,1 @@
+single POST /score n=500 p50=45.3ms p95=68.2ms p99=84.5ms

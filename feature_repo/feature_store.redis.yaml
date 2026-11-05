@@ -1,0 +1,9 @@
+project: fraud
+provider: local
+registry: ${FEAST_REGISTRY}
+online_store:
+  type: redis
+  connection_string: ${REDIS_CONNECTION}
+offline_store:
+  type: duckdb
+entity_key_serialization_version: 3

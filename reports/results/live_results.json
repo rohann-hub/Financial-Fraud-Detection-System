@@ -1,0 +1,19 @@
+{
+  "rows": 12000,
+  "fraud_rows": 350,
+  "pr_auc": 0.8713191600360596,
+  "pr_auc_baseline": 0.029166666666666667,
+  "roc_auc": 0.9707744941753526,
+  "precision_at_1pct": 1.0,
+  "recall_at_1pct": 0.34285714285714286,
+  "recall_at_precision_90": 0.8,
+  "amount_recall_at_1pct": 0.36200731931173735,
+  "alert_rate": 0.04125,
+  "alert_precision": 0.602020202020202,
+  "alert_recall": 0.8514285714285714,
+  "decisions": {
+    "ALLOW": 11505,
+    "BLOCK": 289,
+    "REVIEW": 206
+  }
+}

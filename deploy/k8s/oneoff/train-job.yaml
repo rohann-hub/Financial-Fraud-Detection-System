@@ -1,0 +1,27 @@
+# First training run. Copy data/raw into the cluster volume first (see README).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: initial-training
+  namespace: fraud
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      enableServiceLinks: false
+      securityContext: {fsGroup: 1000}
+      containers:
+        - name: trainer
+          image: fraud-trainer:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "fraudlib.pipeline", "all", "--raw", "data/raw/ieee"]
+          envFrom:
+            - configMapRef: {name: fraud-config}
+          volumeMounts: [{name: data, mountPath: /app/data}]
+          resources:
+            requests: {memory: 3Gi, cpu: "1"}
+            limits: {memory: 7Gi}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: fraud-data}

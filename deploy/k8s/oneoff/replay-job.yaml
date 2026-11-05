@@ -1,0 +1,24 @@
+# Replays the test period into Kafka.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: replay
+  namespace: fraud
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      enableServiceLinks: false
+      securityContext: {fsGroup: 1000}
+      containers:
+        - name: producer
+          image: fraud-service:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "producer/replay.py", "--rate", "200", "--limit", "20000"]
+          envFrom:
+            - configMapRef: {name: fraud-config}
+          volumeMounts: [{name: data, mountPath: /app/data}]
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: fraud-data}

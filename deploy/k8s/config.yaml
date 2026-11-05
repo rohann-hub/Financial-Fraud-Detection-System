@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fraud-config
+data:
+  KAFKA_BOOTSTRAP: kafka:9092
+  MLFLOW_TRACKING_URI: http://mlflow:5000
+  REDIS_CONNECTION: redis:6379
+  FRAUD_HOME: /app
+  ANALYST_API_URL: http://analyst:8001
+  MONITORING_DIR: /app/data/monitoring
+---
+# Demo values. Replace them before anything other than a local cluster.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: fraud-secrets
+type: Opaque
+stringData:
+  POSTGRES_PASSWORD: change-me-postgres
+  DATABASE_URL: postgresql+psycopg2://fraud:change-me-postgres@postgres:5432/fraud
+  SECRET_KEY: change-me-secret
+  INTERNAL_TOKEN: change-me-internal
+  ANALYST_USERS: analyst:demo123,lead:demo123

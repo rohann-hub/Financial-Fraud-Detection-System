@@ -1,0 +1,67 @@
+# Drift check every 6 hours; retrains automatically when drift crosses the threshold.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: drift-monitor
+spec:
+  schedule: "17 */6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          securityContext: {fsGroup: 1000}
+          containers:
+            - name: monitor
+              image: fraud-trainer:latest
+              imagePullPolicy: IfNotPresent
+              command: ["python", "-m", "fraudlib.monitor.drift", "--retrain"]
+              envFrom:
+                - configMapRef: {name: fraud-config}
+                - secretRef: {name: fraud-secrets}
+              volumeMounts: [{name: data, mountPath: /app/data}]
+              resources:
+                requests: {memory: 2Gi, cpu: 500m}
+                limits: {memory: 6Gi}
+          volumes:
+            - name: data
+              persistentVolumeClaim: {claimName: fraud-data}
+---
+# The graph model scores nodes in batch; this keeps those scores current between retrains.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: graph-refresh
+spec:
+  schedule: "41 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          securityContext: {fsGroup: 1000}
+          containers:
+            - name: refresh
+              image: fraud-trainer:latest
+              imagePullPolicy: IfNotPresent
+              command: ["python", "-m", "fraudlib.pipeline", "refresh-graph"]
+              envFrom:
+                - configMapRef: {name: fraud-config}
+                - secretRef: {name: fraud-secrets}
+              volumeMounts: [{name: data, mountPath: /app/data}]
+              resources:
+                requests: {memory: 1Gi, cpu: 250m}
+                limits: {memory: 4Gi}
+          volumes:
+            - name: data
+              persistentVolumeClaim: {claimName: fraud-data}

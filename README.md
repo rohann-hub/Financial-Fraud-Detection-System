@@ -3,7 +3,7 @@
 Scores payment transactions as they arrive, combines a tabular model with a graph model to catch connected
 fraud, sends suspicious payments to an analyst dashboard, and retrains itself when traffic changes.
 
-![Architecture Diagram](docs/images/image.png)
+docs/images/image.png
 
 ```
 replay ──► Kafka ──► scoring service ──► alerts ──► analyst API ──► React dashboard

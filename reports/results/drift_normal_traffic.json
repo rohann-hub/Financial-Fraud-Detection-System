@@ -1,0 +1,12 @@
+{
+  "checked_at": "2026-11-02T17:13:30Z",
+  "rows": 12480,
+  "threshold": 0.3,
+  "status": "stable",
+  "drift_share": 0.13333333333333333,
+  "drifted_columns": [
+    "device_distinct_users_7d",
+    "hour"
+  ],
+  "last_retrain_ts": 0
+}

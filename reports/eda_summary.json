@@ -1,0 +1,24 @@
+{
+  "rows": 199947,
+  "fraud_rows": 6947,
+  "fraud_rate": 0.03474420721491195,
+  "imbalance_ratio": 27.781776306319273,
+  "accuracy_of_always_legit": 0.965255792785088,
+  "days": 180,
+  "users": 26724,
+  "cards": 5779,
+  "devices": 12002,
+  "device_known_share": 0.4191410723841818,
+  "median_amount_fraud": 63.727,
+  "median_amount_legit": 47.9805,
+  "missing_share_top": {
+    "dist1": 0.6,
+    "device_type": 0.581,
+    "M4": 0.5,
+    "D15": 0.402,
+    "D2": 0.402,
+    "D11": 0.401,
+    "D10": 0.401,
+    "D5": 0.4
+  }
+}

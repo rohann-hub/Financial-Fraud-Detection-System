@@ -1,0 +1,18 @@
+# Helper pod for copying the dataset into the shared volume with `kubectl cp`.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: loader
+  namespace: fraud
+spec:
+  enableServiceLinks: false
+  securityContext: {fsGroup: 1000}
+  containers:
+    - name: loader
+      image: fraud-service:latest
+      imagePullPolicy: IfNotPresent
+      command: ["sleep", "7200"]
+      volumeMounts: [{name: data, mountPath: /app/data}]
+  volumes:
+    - name: data
+      persistentVolumeClaim: {claimName: fraud-data}

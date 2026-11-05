@@ -1,0 +1,25 @@
+{
+  "checked_at": "2026-11-02T17:15:04Z",
+  "rows": 24500,
+  "threshold": 0.3,
+  "status": "drift",
+  "drift_share": 0.6,
+  "drifted_columns": [
+    "C1",
+    "D1",
+    "amount",
+    "card_txn_count_24h",
+    "hour",
+    "log_amount",
+    "product_code_code",
+    "user_amount_vs_avg",
+    "user_txn_count_24h"
+  ],
+  "last_retrain_ts": 1793640040.2678053,
+  "retrain": {
+    "version": "3",
+    "promoted": true,
+    "challenger_pr_auc": 0.8750557455938722,
+    "champion_pr_auc": 0.8665169607047131
+  }
+}
